@@ -62,25 +62,27 @@ def get_order(user: User, order: str):
     return data["response"]["orders"][0]["order_content"]
 
 
-def check_orders(message):
-    chat_id = message.chat.id
-    user = user_dict[chat_id]
-    data = get_orders(user, PAGE_COUNT)
-    lst_order = 0
-    for order in data:
-        lst_order = int(order["id"])
-        if user.lst < lst_order:
-            user.lst = lst_order
-            bot.send_message(message.chat.id,
-                             f'Номер заказа : <a href="tg://msg_url?&text={order["number"]}">{order["number"]}</a>\n'
-                             f'Имя покупателя: {order["name_buyer"]} \n'
-                             f'Сумма: {order["summ_shop_curr"]} \n'
-                             f'Дата: {order["add_date"]} ', parse_mode="HTML")
-    start_timer(message)
+def check_orders(chat_id):
+    try:
+        user = user_dict[chat_id]
+        data = get_orders(user, PAGE_COUNT)
+        lst_order = 0
+        for order in data:
+            lst_order = int(order["id"])
+            if user.lst < lst_order:
+                user.lst = lst_order
+                bot.send_message(chat_id,
+                                 f'Номер заказа : <a href="tg://msg_url?&text={order["number"]}">{order["number"]}</a>\n'
+                                 f'Имя покупателя: {order["name_buyer"]} \n'
+                                 f'Сумма: {order["summ_shop_curr"]} \n'
+                                 f'Дата: {order["add_date"]} ', parse_mode="HTML")
+    except Exception as e:
+        start_timer(chat_id)
+    start_timer(chat_id)
 
 
-def start_timer(message):
-    t = threading.Timer(30, check_orders, [message])
+def start_timer(chat_id):
+    t = threading.Timer(30, check_orders, [chat_id])
     t.start()
 
 
@@ -114,7 +116,7 @@ def process_token_step(message):
         user = user_dict[chat_id]
         user.token = token
         bot.send_message(chat_id, 'Ваш сайт:  ' + user.url + '\n Token: ' + user.token)
-        start_timer(message)
+        start_timer(chat_id)
     except Exception as e:
         bot.reply_to(message, 'Ошибочка вышла')
 
